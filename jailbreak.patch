@@ -1,0 +1,27 @@
+diff --git "a/FFmpegFreeUI/\345\205\266\344\273\226\345\212\237\350\203\275/\346\217\222\344\273\266\347\256\241\347\220\206.vb" "b/FFmpegFreeUI/\345\205\266\344\273\226\345\212\237\350\203\275/\346\217\222\344\273\266\347\256\241\347\220\206.vb"
+index 50c17a1..4fd5ab1 100644
+--- "a/FFmpegFreeUI/\345\205\266\344\273\226\345\212\237\350\203\275/\346\217\222\344\273\266\347\256\241\347\220\206.vb"
++++ "b/FFmpegFreeUI/\345\205\266\344\273\226\345\212\237\350\203\275/\346\217\222\344\273\266\347\256\241\347\220\206.vb"
+@@ -4,21 +4,9 @@ Imports System.Text.Json
+ Imports Sunny.UI
+ Public Class 插件管理
+ 
+-    Public Shared Property 是否已解锁个性化功能 As Boolean = False
++    Public Shared Property 是否已解锁个性化功能 As Boolean = True
+ 
+     Public Shared Sub 启动时读取个性化功能解锁器()
+-        Dim a As String = Path.Combine(Application.StartupPath, "FFmpegFreeUISupporter.dll")
+-        If Not FileIO.FileSystem.FileExists(a) Then
+-            Form1.加载自定义图标(Nothing)
+-            Form1.设置页面.Panel1.Visible = True
+-            Form1.设置页面.Panel3.Visible = False
+-            Exit Sub
+-        End If
+-        Dim 程序集 As Assembly = Assembly.LoadFile(a)
+-        Dim 获取类型 As Type = 程序集.GetType(程序集.GetName.Name & ".Entry")
+-        Dim 创建实例 As Object = Activator.CreateInstance(获取类型)
+-        Dim 实现方法 As MethodInfo = 获取类型.GetMethod("Entry")
+-        实现方法.Invoke(创建实例, Array.Empty(Of Object)())
+         If 是否已解锁个性化功能 Then
+             Form1.设置页面.Panel1.Visible = False
+             Form1.设置页面.Panel3.Visible = True

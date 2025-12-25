@@ -1,0 +1,93 @@
+name: Build and Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Version'
+        required: true
+      prerelease:
+        description: 'Pre-release'
+        required: false
+        type: boolean
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    strategy:
+      matrix:
+        arch: [x64, arm64]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: "10.0.x"
+      - name: Apply patch
+        run: |
+          git submodule update --init
+          cd FFmpegFreeUI
+          git apply ../jailbreak.patch
+      - name: Restore dependencies
+        working-directory: ./FFmpegFreeUI
+        run: |
+          dotnet restore FFmpegFreeUI.sln \
+            -r win-${{ matrix.arch }} \
+            -p:EnableWindowsTargeting=true
+      - name: Build and Publish - SelfContained
+        working-directory: ./FFmpegFreeUI
+        run: |
+          dotnet publish FFmpegFreeUI/FFmpegFreeUI.vbproj \
+            -c Release \
+            -r win-${{ matrix.arch }} \
+            --no-restore \
+            --self-contained \
+            -p:DebugType=none \
+            -p:PublishSingleFile=false \
+            -p:PublishReadyToRun=true \
+            -p:PublishReadyToRunEmitSymbols=false \
+            -p:EnableWindowsTargeting=true \
+            -o ./publish/SelfContained-${{ matrix.arch }}
+      - name: Build and Publish - SelfContained SingleFile
+        working-directory: ./FFmpegFreeUI
+        run: |
+          dotnet publish FFmpegFreeUI/FFmpegFreeUI.vbproj \
+            -c Release \
+            -r win-${{ matrix.arch }} \
+            --no-restore \
+            --self-contained \
+            -p:DebugType=none \
+            -p:PublishSingleFile=true \
+            -p:PublishReadyToRun=true \
+            -p:PublishReadyToRunEmitSymbols=false \
+            -p:EnableWindowsTargeting=true \
+            -o ./publish/SelfContained-SingleFile-${{ matrix.arch }}
+      - name: Build and Publish - NoSelfContained SingleFile
+        working-directory: ./FFmpegFreeUI
+        run: |
+          dotnet publish FFmpegFreeUI/FFmpegFreeUI.vbproj \
+            -c Release \
+            -r win-${{ matrix.arch }} \
+            --no-restore \
+            --no-self-contained \
+            -p:DebugType=none \
+            -p:PublishSingleFile=true \
+            -p:PublishReadyToRun=false \
+            -p:PublishReadyToRunEmitSymbols=false \
+            -p:EnableCompressionInSingleFile=false \
+            -p:EnableWindowsTargeting=true \
+            -o ./publish/NoSelfContained-SingleFile-${{ matrix.arch }}
+      - name: Create 7z archives
+        run: |
+          7z a FFmpegFreeUI-SelfContained-win-${{ matrix.arch }}.7z ./FFmpegFreeUI/publish/SelfContained-${{ matrix.arch }}/*
+          7z a FFmpegFreeUI-SelfContained-SingleFile-win-${{ matrix.arch }}.7z ./FFmpegFreeUI/publish/SelfContained-SingleFile-${{ matrix.arch }}/*
+          7z a FFmpegFreeUI-NoSelfContained-SingleFile-win-${{ matrix.arch }}.7z ./FFmpegFreeUI/publish/NoSelfContained-SingleFile-${{ matrix.arch }}/*
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: FFmpegFreeUI-*-win-${{ matrix.arch }}.7z
+          prerelease: ${{ inputs.prerelease }}
+          tag_name: ${{ inputs.tag }}

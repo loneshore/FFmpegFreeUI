@@ -1,0 +1,3 @@
+[submodule "FFmpegFreeUI"]
+	path = FFmpegFreeUI
+	url = https://github.com/Lake1059/FFmpegFreeUI.git
