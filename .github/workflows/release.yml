@@ -10,10 +10,16 @@ on:
         description: 'Pre-release'
         required: false
         type: boolean
+      ref:
+        description: 'Branch, Tag or SHA'
+        required: false
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
     permissions:
       contents: write
     strategy:
@@ -28,15 +34,17 @@ jobs:
           dotnet-version: "10.0.x"
       - name: Apply patch
         run: |
-          git submodule update --init
+          git submodule update --init --remote
           cd FFmpegFreeUI
-          git apply ../jailbreak.patch
+          if [ -n "${{ inputs.ref }}" ]; then
+            git checkout "${{ inputs.ref }}"
+          fi
+          git apply ../*.patch
       - name: Restore dependencies
         working-directory: ./FFmpegFreeUI
         run: |
           dotnet restore FFmpegFreeUI.sln \
-            -r win-${{ matrix.arch }} \
-            -p:EnableWindowsTargeting=true
+            -r win-${{ matrix.arch }}
       - name: Build and Publish - SelfContained
         working-directory: ./FFmpegFreeUI
         run: |
@@ -49,7 +57,7 @@ jobs:
             -p:PublishSingleFile=false \
             -p:PublishReadyToRun=true \
             -p:PublishReadyToRunEmitSymbols=false \
-            -p:EnableWindowsTargeting=true \
+            -p:EnableCompressionInSingleFile=false \
             -o ./publish/SelfContained-${{ matrix.arch }}
       - name: Build and Publish - SelfContained SingleFile
         working-directory: ./FFmpegFreeUI
@@ -63,7 +71,7 @@ jobs:
             -p:PublishSingleFile=true \
             -p:PublishReadyToRun=true \
             -p:PublishReadyToRunEmitSymbols=false \
-            -p:EnableWindowsTargeting=true \
+            -p:EnableCompressionInSingleFile=true \
             -o ./publish/SelfContained-SingleFile-${{ matrix.arch }}
       - name: Build and Publish - NoSelfContained SingleFile
         working-directory: ./FFmpegFreeUI
@@ -78,7 +86,6 @@ jobs:
             -p:PublishReadyToRun=false \
             -p:PublishReadyToRunEmitSymbols=false \
             -p:EnableCompressionInSingleFile=false \
-            -p:EnableWindowsTargeting=true \
             -o ./publish/NoSelfContained-SingleFile-${{ matrix.arch }}
       - name: Create 7z archives
         run: |
