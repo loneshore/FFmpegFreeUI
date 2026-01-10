@@ -1,0 +1,13 @@
+diff --git "a/FFmpegFreeUI/\347\224\250\346\210\267\350\256\276\347\275\256.vb" "b/FFmpegFreeUI/\347\224\250\346\210\267\350\256\276\347\275\256.vb"
+index 27e173e..d3fce59 100644
+--- "a/FFmpegFreeUI/\347\224\250\346\210\267\350\256\276\347\275\256.vb"
++++ "b/FFmpegFreeUI/\347\224\250\346\210\267\350\256\276\347\275\256.vb"
+@@ -30,7 +30,7 @@ Public Class 用户设置
+         Public Property 自动加载预设选项 As 自动加载预设选项枚举 = 自动加载预设选项枚举.不自动加载预设
+         Public Property 自动加载预设文件路径 As String = ""
+         Public Property 最后的预设数据 As New 预设数据类型
+-        Public Property 是否参与用户统计 As Boolean = True
++        Public Property 是否参与用户统计 As Boolean = False
+         Public Property 是否监听端口 As Boolean = False
+         Public Property 监听的端口 As String = ""
+ 
