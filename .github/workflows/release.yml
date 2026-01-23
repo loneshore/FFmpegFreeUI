@@ -10,6 +10,9 @@ on:
         description: 'Pre-release'
         required: false
         type: boolean
+      patch:
+        description: 'Remote Patch'
+        required: false
       ref:
         description: 'Branch, Tag or SHA'
         required: false
@@ -39,47 +42,16 @@ jobs:
           if [ -n "${{ inputs.ref }}" ]; then
             git checkout "${{ inputs.ref }}"
           fi
-          git apply ../*.patch
-      - name: Restore dependencies
-        working-directory: ./FFmpegFreeUI
-        run: |
-          dotnet restore FFmpegFreeUI.sln \
-            -r win-${{ matrix.arch }}
-      - name: Build and Publish - SelfContained
-        working-directory: ./FFmpegFreeUI
-        run: |
-          dotnet publish FFmpegFreeUI/FFmpegFreeUI.vbproj \
-            -c Release \
-            -r win-${{ matrix.arch }} \
-            --no-restore \
-            --self-contained \
-            -p:DebugType=none \
-            -p:PublishSingleFile=false \
-            -p:PublishReadyToRun=true \
-            -p:PublishReadyToRunEmitSymbols=false \
-            -p:EnableCompressionInSingleFile=false \
-            -o ./publish/SelfContained-${{ matrix.arch }}
-      - name: Build and Publish - SelfContained SingleFile
-        working-directory: ./FFmpegFreeUI
-        run: |
-          dotnet publish FFmpegFreeUI/FFmpegFreeUI.vbproj \
-            -c Release \
-            -r win-${{ matrix.arch }} \
-            --no-restore \
-            --self-contained \
-            -p:DebugType=none \
-            -p:PublishSingleFile=true \
-            -p:PublishReadyToRun=true \
-            -p:PublishReadyToRunEmitSymbols=false \
-            -p:EnableCompressionInSingleFile=true \
-            -o ./publish/SelfContained-SingleFile-${{ matrix.arch }}
+          if [ -n "${{ inputs.patch }}" ]; then
+            curl -LsSf "${{ inputs.patch }}" | git apply
+          fi
+          git apply ../patches/*.patch
       - name: Build and Publish - NoSelfContained SingleFile
         working-directory: ./FFmpegFreeUI
         run: |
           dotnet publish FFmpegFreeUI/FFmpegFreeUI.vbproj \
             -c Release \
             -r win-${{ matrix.arch }} \
-            --no-restore \
             --no-self-contained \
             -p:DebugType=none \
             -p:PublishSingleFile=true \
@@ -89,8 +61,6 @@ jobs:
             -o ./publish/NoSelfContained-SingleFile-${{ matrix.arch }}
       - name: Create 7z archives
         run: |
-          7z a FFmpegFreeUI-SelfContained-win-${{ matrix.arch }}.7z ./FFmpegFreeUI/publish/SelfContained-${{ matrix.arch }}/*
-          7z a FFmpegFreeUI-SelfContained-SingleFile-win-${{ matrix.arch }}.7z ./FFmpegFreeUI/publish/SelfContained-SingleFile-${{ matrix.arch }}/*
           7z a FFmpegFreeUI-NoSelfContained-SingleFile-win-${{ matrix.arch }}.7z ./FFmpegFreeUI/publish/NoSelfContained-SingleFile-${{ matrix.arch }}/*
       - name: Release
         uses: softprops/action-gh-release@v2
